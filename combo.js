@@ -3,8 +3,24 @@ const nums = '1234567890';
 const specs = '~!@#$%^&*()_+{}[]-=\\|/?<>.,`"\''
 X = (letters + letters.toUpperCase() + nums + specs).split('');
 
-class GreedyOver {
-    constructor(parsers, name){
+class InvParser {
+    constructor(alph){
+        this.alph = alph;
+    }
+
+    splitAlph(firstAlph, firstName, secondName){
+        const secondAlph = 
+            this.alph.filter(char => !firstAlph.includes(char));
+        const parser1 = new CharAcceptor(firstAlph, this, firstName);
+        const parser2 = new CharAcceptor(secondAlph, this, secondName);
+        return new GreedyOver(this.alph, [parser1, parser2]);
+    }
+
+}
+
+class GreedyOver extends InvParser {
+    constructor(alph, parsers, name){
+        super(alph);
         this.parsers = parsers;
         this.name = name;
     }
@@ -36,22 +52,33 @@ class GreedyOver {
             }
         } while (start < str.length);
 
-        return tokens;
+        return {
+            type: 'sequence',
+            tokens
+        };
     }
 }
 
-class CharAcceptor {
+class Tokenizer extends InvParser {
     constructor(alph, name){
-        this.alph = alph;
+        super(alph);
         this.name = name;
     }
     
-    splitAlph(firstAlph, firstName, secondName){
-        const secondAlph = 
-            this.alph.filter(char => !firstAlph.includes(char));
-        const parser1 = new CharAcceptor(firstAlph, firstName);
-        const parser2 = new CharAcceptor(secondAlph, secondName);
-        return new GreedyOver([parser1, parser2]);
+    parseStr(str){
+        return {
+            type: 'token',
+            name: this.name,
+            data: str,
+        }
+    }
+}
+
+class CharAcceptor extends InvParser {
+    constructor(alph, supportParser, name){
+        super(alph);
+        this.name = name;
+        this.supportParser = supportParser;
     }
 
     parseStr(str){
@@ -62,15 +89,27 @@ class CharAcceptor {
                 }
             }
         }
-        return {
-            type: 'token',
-            name: this.name,
-            data: str
-        };
+        return this.supportParser.parseStr(str);
     }
 }
 
+const flattenSequences = sequenceToken => {
+    if (sequenceToken.type !== 'sequence')
+        throw "lol tried to flatten non sequence";
+    sequenceToken.tokens.forEach(token => {
+        if(token.type !== 'sequence'){
+            throw "lol inner of flatten sequence is not sequence"
+        }
+    });
+    return {
+        type: 'sequence',
+        tokens: sequenceToken
+            .tokens
+            .map(token => token.tokens)
+            .reduce((acc, cur) => acc.concat(cur), [])
+    }
+}
 
-const ca = new CharAcceptor(X, 'whole alphabet').splitAlph('aeiou', 'vowels', 'letters');
+const ca = new CharAcceptor(X, new Tokenizer(X), 'whole alphabet').splitAlph('a', 'letters').splitAlph('aeiou', 'vowels');
 
-console.log(ca.parseStr('hsezalloae'));
+console.log(JSON.stringify(flattenSequences(ca.parseStr('hsezallooeaoo'))));

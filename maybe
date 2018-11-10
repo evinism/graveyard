@@ -1,0 +1,20 @@
+Language =
+    SplitOver({
+        over: 'aeiou',
+        with: LeftSplit({
+            over: '"'
+            with: Ident
+            without: Ident
+        }),
+        without: RightSplit({
+            over: '"'
+            with: MidSplit({
+                over: ''
+                left: Ident,
+                right: Ident,
+            }),
+            without:
+        })
+    })
+
+
