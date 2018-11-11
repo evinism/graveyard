@@ -39,7 +39,7 @@ function beep(duration, frequency, volume, type, callback) {
 const rawApi = (function(){
     uuidStore = [];
     const staticNetDelay = 200
-    const dynamicNetDelay = 5; // It does NOT handle jitter well.
+    const dynamicNetDelay = 0; // It does NOT handle jitter well.
     const persistUUID = ({uuid, data}) => {
         if (!uuidStore[uuid]) {
             uuidStore[uuid] = data;
@@ -79,7 +79,6 @@ const rawApi = (function(){
             for(let i = 0; i < uuidStore.length; i++){
                 str += uuidStore[i] ? '1' : '0';
             }
-            //console.log('memory: ' + str)
         }, 
         10
     );
@@ -129,10 +128,21 @@ class ApiHelper {
 
 const api = new ApiHelper(rawApi);
 
+const numToBitArr = (num, size) => num
+    .toString(2)
+    .slice(-size)
+    .padStart(size, '0')
+    .split('')
+    .map(digit => parseInt(digit));
+
+const bitArrToNum = bitArr => parseInt(bitArr.join(''), 2)
+
+
 // config stuff
 const memorySize = 32768; // for now
 const ptrLength = Math.log2(memorySize);
 // For now, word size is size of headPtrLength
+const msgCountLength = 2;
 const headPtrLength = 2 + ptrLength;
 // w is word num -> address
 const w = num => num * headPtrLength
@@ -144,9 +154,9 @@ const w = num => num * headPtrLength
 
 
 const delays = {
-    pollInterval: 200,
-    workTime: 500,
-    postReleaseDelay: 500,
+    pollInterval: 2000,
+    workTime: 5000,
+    postReleaseDelay: 5000,
 }
 
 class Client {
@@ -161,7 +171,7 @@ class Client {
             // We got the lock and are now obligated to 
             // instantiate the HeadPtr
             console.log(this.name + ': creation lock acquired');
-            await this.writeHeadPtr(w(1), 15);
+            await this.writeHeadPtr(w(1), memorySize - 1); // Head Ptr is just beyond to make math easier
         }
         this.onesSledStartPoint = 0;
 
@@ -194,19 +204,19 @@ class Client {
 
         if(lastRead[1]) {
             // We got a read + lock
-            const value = parseInt(lastRead.slice(2).join(''), 2)
+            const curHeadPtr = bitArrToNum(lastRead.slice(2))
 
-            console.log(this.name + ': lock acquired w/ a ' + value)
+            console.log(this.name + ': lock acquired w/ a ' + curHeadPtr)
 
             // do 5 seconds of work with the item
             await new Promise(res => setTimeout(res, delays.workTime))
 
-            const nextValue = Math.floor(Math.random() * 200);
+            const nextHeadPtr = Math.floor(Math.random()*512)//memorySize - 1;
             await this.writeHeadPtr(
                 w(currentWord + 1),
-                nextValue
+                nextHeadPtr
             );
-            console.log(this.name + ': lock released w/ a ' + nextValue)
+            console.log(this.name + ': lock released w/ a ' + nextHeadPtr)
             await new Promise(res => setTimeout(res, delays.postReleaseDelay))
         } else {
             console.log(this.name + ': lock rejected');
@@ -214,18 +224,17 @@ class Client {
     }
 
     async writeHeadPtr(address, headPtrValue){
-        const inBinary = headPtrValue
-            .toString(2)
-            .slice(-ptrLength)
-            .padStart(ptrLength, '0')
-            .split('')
-            .map(digit => parseInt(digit));
+        const inBinary = numToBitArr(headPtrValue, ptrLength);
         const results = await api.hitSeries(address, [].concat([0, 1], inBinary), this.name)
         if (results[0]) {
             // someone overwrote where we were going to get a head ptr.
             // try writes down the list until we get one.
             return this.writeHeadPtr(address + headPtrLength, headPtrValue);
         }
+    }
+
+    async readWriteMessages(headPtr){
+        msgCount = api.hitMemRange(headPtr)
     }
 }
 
