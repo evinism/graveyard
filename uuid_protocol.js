@@ -240,24 +240,34 @@ class Client {
         }
     }
 
-    async readWriteMessages(headPtr){
+    async readMessages(headPtr){
         // --- Read subsection ---
         // get current message count
         const msgCount = bitArrToNum(
             await api.hitMemRange(headPtr + 1 - msgCountLength, headPtr + 1)
         );
-
         console.log(this.name + ': Read msg count of ' + msgCount);
-        // for now increment message count (but put in no records)
-        const prevMsgStoreLength = msgCountLength;
 
-        // --- Write subsection ---
+        // for now increment message count (but put in no records)
+        const messages = Array(msgCount).fill(1);
+        const prevMsgStoreLength = msgCountLength;
         const nextHeadPtr = (headPtr - prevMsgStoreLength);// - msgCount * msgRecordSize);
+        return [messages, nextHeadPtr]
+    }
+
+    async writeMessages(messages, headPtr){
+        const numOfMessages = messages.length;
         const nextMsgStoreLength = msgCountLength;
         await api.hitSeries(
-            (nextHeadPtr + 1) - (nextMsgStoreLength),
-            numToBitArr(msgCount + 1, msgCountLength)
+            (headPtr + 1) - (nextMsgStoreLength),
+            numToBitArr(numOfMessages, msgCountLength)
         );
+    }
+
+    async readWriteMessages(headPtr){
+        const [messages, nextHeadPtr] = await this.readMessages(headPtr);
+        messages.push('lol');
+        await this.writeMessages(messages, nextHeadPtr);
         return nextHeadPtr;
     }
 }
