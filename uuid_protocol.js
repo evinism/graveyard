@@ -142,8 +142,15 @@ const bitArrToNum = bitArr => parseInt(bitArr.join(''), 2)
 const memorySize = 32768; // for now
 const ptrLength = Math.log2(memorySize);
 // For now, word size is size of headPtrLength
-const msgCountLength = 2;
-const headPtrLength = 2 + ptrLength;
+const headPtrLength = 2 + ptrLength; // start seq + a single ptr
+const msgCountLength = 5; // Num of bits dedicated to how many messages there are
+
+const msgDataSizeLength = 10; // num of bits dedicated to 
+const msgDestIdSize = 3; // num of bits dedicated to who the message is for.
+
+// dest id, ptr to msg data, 
+const msgRecordSize =  msgDestIdSize + ptrLength + msgDataSizeLength; 
+
 // w is word num -> address
 const w = num => num * headPtrLength
 
@@ -155,7 +162,7 @@ const w = num => num * headPtrLength
 
 const delays = {
     pollInterval: 2000,
-    workTime: 5000,
+    workTime: 100,
     postReleaseDelay: 5000,
 }
 
@@ -206,17 +213,17 @@ class Client {
             // We got a read + lock
             const curHeadPtr = bitArrToNum(lastRead.slice(2))
 
-            console.log(this.name + ': lock acquired w/ a ' + curHeadPtr)
+            console.log(this.name + ': lock acquired')
 
+            const nextHeadPtr = await this.readWriteMessages(curHeadPtr);
             // do 5 seconds of work with the item
             await new Promise(res => setTimeout(res, delays.workTime))
 
-            const nextHeadPtr = Math.floor(Math.random()*512)//memorySize - 1;
             await this.writeHeadPtr(
                 w(currentWord + 1),
                 nextHeadPtr
             );
-            console.log(this.name + ': lock released w/ a ' + nextHeadPtr)
+            console.log(this.name + ': lock released')
             await new Promise(res => setTimeout(res, delays.postReleaseDelay))
         } else {
             console.log(this.name + ': lock rejected');
@@ -234,7 +241,24 @@ class Client {
     }
 
     async readWriteMessages(headPtr){
-        msgCount = api.hitMemRange(headPtr)
+        // --- Read subsection ---
+        // get current message count
+        const msgCount = bitArrToNum(
+            await api.hitMemRange(headPtr + 1 - msgCountLength, headPtr + 1)
+        );
+
+        console.log(this.name + ': Read msg count of ' + msgCount);
+        // for now increment message count (but put in no records)
+        const prevMsgStoreLength = msgCountLength;
+
+        // --- Write subsection ---
+        const nextHeadPtr = (headPtr - prevMsgStoreLength);// - msgCount * msgRecordSize);
+        const nextMsgStoreLength = msgCountLength;
+        await api.hitSeries(
+            (nextHeadPtr + 1) - (nextMsgStoreLength),
+            numToBitArr(msgCount + 1, msgCountLength)
+        );
+        return nextHeadPtr;
     }
 }
 
@@ -242,6 +266,6 @@ class Client {
 client1 = new Client('client 1');
 client2 = new Client('client 2');
 client3 = new Client('client 3');
-setTimeout(() => client1.init(), Math.random() * 10000);
+setTimeout(() => client1.init(), Math.random() * 0);
 setTimeout(() => client2.init(), Math.random() * 10000);
 //setTimeout(() => client3.init(), Math.random() * 10000);
