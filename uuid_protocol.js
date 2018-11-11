@@ -157,9 +157,28 @@ const msgRecordSize =  msgDestIdSize + ptrLength + msgDataSizeLength;
 // w is word num -> address
 const w = num => num * headPtrLength
 
-// msgRecord is of form { msg: int, msgPtr: int, msgSize: int }
-const msgRecordToBitArr = msgRecord => undefined
-const bitArrToMsgRecord = bitArr => undefined
+// msgRecord is of form { dest: int, msgPtr: int, msgSize: int }
+const msgRecordToBitArr = ({ dest, msgPtr, msgSize}) => 
+    [].concat(
+        numToBitArr(dest, msgDestIdSize),
+        numToBitArr(msgPtr, ptrLength),
+        numToBitArr(msgSize, msgDataSizeLength),
+    );
+
+const bitArrToMsgRecord = bitArr => ({
+    dest: bitArrToNum(bitArr.slice(
+        0,
+        msgDestIdSize
+    )),
+    msgPtr: bitArrToNum(bitArr.slice(
+        msgDestIdSize,
+        msgDestIdSize + ptrLength
+    )),
+    msgSize: bitArrToNum(bitArr.slice(
+        msgDestIdSize + ptrLength
+    )),
+})
+    
 
 const delays = {
     pollInterval: 2000,
@@ -254,11 +273,17 @@ class Client {
             headPtr + 1 - msgCountLength
         );
         
-        console.log(this.name + ': read messages bitfield: ' + messagesBitfield.join(''));
-        // for now increment message count (but put in no records)
-        const messages = Array(msgCount).fill(1);
+        const splitMessagesBitfield = [];
+        const tempArr = messagesBitfield.slice();
+        while(tempArr.length) {
+            splitMessagesBitfield.push(tempArr.splice(0, msgRecordSize));
+        }
+
         const prevMsgStoreLength = msgCountLength + msgCount * msgRecordSize;
         const nextHeadPtr = (headPtr - prevMsgStoreLength);// - msgCount * msgRecordSize);
+
+        const messages = splitMessagesBitfield.map(bitArrToMsgRecord);
+        console.log(this.name + ': read messages: ' + JSON.stringify(messages));
         return [messages, nextHeadPtr]
     }
 
@@ -267,13 +292,9 @@ class Client {
         const nextMsgStoreLength = msgCountLength + msgCount * msgRecordSize;
 
         // TODO: Make messages a data structure we can encode in bits
-        const msgRecords = Array(msgCount)
-            .fill(0)
-            .map(_ => [].concat(
-                numToBitArr(Math.floor(Math.random()*100), msgDestIdSize),
-                numToBitArr(0, ptrLength),
-                numToBitArr(Math.floor(Math.random()*100), msgDataSizeLength),
-            )).reduce((a, b) => a.concat(b), [])
+        const msgRecords = messages
+            .map(msgRecordToBitArr)
+            .reduce((a, b) => a.concat(b), [])
         await api.hitSeries(
             (headPtr + 1) - (nextMsgStoreLength),
             [].concat(msgRecords, numToBitArr(msgCount, msgCountLength))
@@ -282,7 +303,13 @@ class Client {
 
     async readWriteMessages(headPtr){
         const [messages, nextHeadPtr] = await this.readMessages(headPtr);
-        messages.push('lol');
+
+        // Push a random message for now.
+        messages.push({
+            dest: Math.floor(Math.random() * 3),
+            msgPtr: Math.floor(Math.random() * 100),
+            msgSize: Math.floor(Math.random() * 100)
+        });
         await this.writeMessages(messages, nextHeadPtr);
         return nextHeadPtr;
     }
