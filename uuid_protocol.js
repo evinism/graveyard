@@ -104,6 +104,9 @@ class ApiHelper {
     }
 
     hitAddr(addr){
+        if(isNaN(addr)){
+            debugger;
+        }
         return this.server.postUUID({
             uuid: addr,
             data: 'bogus',
@@ -154,11 +157,9 @@ const msgRecordSize =  msgDestIdSize + ptrLength + msgDataSizeLength;
 // w is word num -> address
 const w = num => num * headPtrLength
 
-// First byte is special-- writing first byte aqcuires both 
-// a creation lock and a a rw lock. A creation lock means
-// that 
-// and tasks the client w/ setting up the structure. 
-
+// msgRecord is of form { msg: int, msgPtr: int, msgSize: int }
+const msgRecordToBitArr = msgRecord => undefined
+const bitArrToMsgRecord = bitArr => undefined
 
 const delays = {
     pollInterval: 2000,
@@ -248,19 +249,34 @@ class Client {
         );
         console.log(this.name + ': Read msg count of ' + msgCount);
 
+        const messagesBitfield = await api.hitMemRange(
+            headPtr + 1 - msgCount * msgRecordSize - msgCountLength,
+            headPtr + 1 - msgCountLength
+        );
+        
+        console.log(this.name + ': read messages bitfield: ' + messagesBitfield.join(''));
         // for now increment message count (but put in no records)
         const messages = Array(msgCount).fill(1);
-        const prevMsgStoreLength = msgCountLength;
+        const prevMsgStoreLength = msgCountLength + msgCount * msgRecordSize;
         const nextHeadPtr = (headPtr - prevMsgStoreLength);// - msgCount * msgRecordSize);
         return [messages, nextHeadPtr]
     }
 
     async writeMessages(messages, headPtr){
-        const numOfMessages = messages.length;
-        const nextMsgStoreLength = msgCountLength;
+        const msgCount = messages.length;
+        const nextMsgStoreLength = msgCountLength + msgCount * msgRecordSize;
+
+        // TODO: Make messages a data structure we can encode in bits
+        const msgRecords = Array(msgCount)
+            .fill(0)
+            .map(_ => [].concat(
+                numToBitArr(Math.floor(Math.random()*100), msgDestIdSize),
+                numToBitArr(0, ptrLength),
+                numToBitArr(Math.floor(Math.random()*100), msgDataSizeLength),
+            )).reduce((a, b) => a.concat(b), [])
         await api.hitSeries(
             (headPtr + 1) - (nextMsgStoreLength),
-            numToBitArr(numOfMessages, msgCountLength)
+            [].concat(msgRecords, numToBitArr(msgCount, msgCountLength))
         );
     }
 
