@@ -38,7 +38,7 @@ function beep(duration, frequency, volume, type, callback) {
 // Api representation:
 const rawApi = (function(){
     uuidStore = [];
-    const staticNetDelay = 200
+    const staticNetDelay = 100
     const dynamicNetDelay = 0; // It does NOT handle jitter well.
     const persistUUID = ({uuid, data}) => {
         if (!uuidStore[uuid]) {
@@ -204,8 +204,8 @@ const bitArrToMsgRecord = bitArr => ({
     
 
 const delays = {
-    pollInterval: 2000,
-    postReleaseDelay: 5000,
+    pollInterval: 200,
+    postReleaseDelay: 500,
 }
 
 class Client {
@@ -256,7 +256,7 @@ class Client {
             // We got a read + lock
             const curHeadPtr = bitArrToNum(lastRead.slice(2))
 
-            console.log(this.name + ': lock acquired')
+            //console.log(this.name + ': lock acquired')
 
             const nextHeadPtr = await this.readWriteMessages(curHeadPtr);
 
@@ -264,10 +264,10 @@ class Client {
                 w(currentWord + 1),
                 nextHeadPtr
             );
-            console.log(this.name + ': lock released')
+            //console.log(this.name + ': lock released')
             await new Promise(res => setTimeout(res, delays.postReleaseDelay))
         } else {
-            console.log(this.name + ': lock rejected');
+            //console.log(this.name + ': lock rejected');
         }
     }
 
@@ -287,7 +287,7 @@ class Client {
         const msgCount = bitArrToNum(
             await api.hitMemRange(headPtr + 1 - msgCountLength, headPtr + 1)
         );
-        console.log(this.name + ': Read msg count of ' + msgCount);
+        //console.log(this.name + ': Read msg count of ' + msgCount);
 
         const messagesBitfield = await api.hitMemRange(
             headPtr + 1 - msgCount * msgRecordSize - msgCountLength,
@@ -360,16 +360,21 @@ class Client {
 
     async readWriteMessages(headPtr){
         const [messages, postReadHeadPtr] = await this.readMessages(headPtr);
-
-        const dest = Math.floor(Math.random() * 3);
-        const [postMsgHeadPtr, newMessage] = await this.makeMessage(
-            postReadHeadPtr,
-            dest, 
-            'to: id #' + dest + ', yo dawg, ' + this.name + ' here, level ' + Math.random().toFixed(2) + ' good'
-        );
-        
-        // Push a random message for now.
-        messages.push(newMessage);
+        let nextHeadPtr = postReadHeadPtr;
+        if (Math.random() > 0.8) {
+            let dest = Math.floor(Math.random() * (3 - 1));
+            dest = dest >= this.id ? dest + 1 : dest;
+            const [postMsgHeadPtr, newMessage] = await this.makeMessage(
+                postReadHeadPtr,
+                dest, 
+                'to: client #' + (dest + 1) + ', yo dawg, ' + this.name + ' here, level ' + Math.random().toFixed(2) + ' good'
+            );
+            console.log(this.name + ': sending dope message to client #' + (dest + 1));
+            
+            // Push a random message for now.
+            messages.push(newMessage);
+            nextHeadPtr = postMsgHeadPtr;
+        }
 
         for(let i = 0; i < messages.length; i++){
             if(messages[i].dest === this.id){
@@ -378,8 +383,8 @@ class Client {
             }
         }
 
-        await this.writeMessages(messages, postMsgHeadPtr);
-        return postMsgHeadPtr;
+        await this.writeMessages(messages, nextHeadPtr);
+        return nextHeadPtr;
     }
 }
 
