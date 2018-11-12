@@ -157,6 +157,29 @@ const msgRecordSize =  msgDestIdSize + ptrLength + msgDataSizeLength;
 // w is word num -> address
 const w = num => num * headPtrLength
 
+const stringToBitArr = string => {
+    var resultArray = []
+
+    for (var i = 0; i < string.length; i++) {
+        var compact = string.charCodeAt(i).toString(2)
+        var padded = compact.padStart(8, '0')
+
+        resultArray.push(padded)
+    }
+
+    return resultArray.join('').split('')
+}
+
+const bitArrToString = bitArr => {
+    let string = ''
+    const tempArr = bitArr.slice();
+    while(tempArr.length) {
+        const charBin = tempArr.splice(0, 8).join('');
+        string += String.fromCharCode(parseInt(charBin, 2))
+    }
+    return string;
+}
+
 // msgRecord is of form { dest: int, msgPtr: int, msgSize: int }
 const msgRecordToBitArr = ({ dest, msgPtr, msgSize}) => 
     [].concat(
@@ -300,18 +323,63 @@ class Client {
             [].concat(msgRecords, numToBitArr(msgCount, msgCountLength))
         );
     }
+    
+    async makeDataFrame(headPtr, string){
+        const bitArr = stringToBitArr(string);
+        await api.hitSeries(
+            headPtr + 1 - bitArr.length,
+            bitArr
+        );
+        return [headPtr - bitArr.length, headPtr, bitArr.length];
+    }
+
+    async makeMessage(headPtr, string){
+        const [
+            nextHeadPtr,
+            dataframePtr,
+            dataframeSize
+        ] = await this.makeDataFrame(
+            headPtr,
+            string
+        );
+
+        const newMessage = {
+            dest: Math.floor(Math.random() * 3),
+            msgPtr: dataframePtr,
+            msgSize: dataframeSize,
+        };
+        return [nextHeadPtr, newMessage];
+    }
+
+    async getMessageText(message){
+        const start = message.msgPtr - message.msgSize + 1;
+        const resultString = bitArrToString(await api.hitMemRange(
+            message.msgPtr - message.msgSize + 1,
+            message.msgPtr
+        ));
+        console.log(this.name + ': Read message "' + resultString + '"')
+    }
 
     async readWriteMessages(headPtr){
-        const [messages, nextHeadPtr] = await this.readMessages(headPtr);
+        const [messages, postReadHeadPtr] = await this.readMessages(headPtr);
 
+
+        const [postMsgHeadPtr, newMessage] = await this.makeMessage(
+            postReadHeadPtr,
+            'yo dawg level ' + Math.random().toFixed(2) + ' good'
+        );
+        
         // Push a random message for now.
-        messages.push({
-            dest: Math.floor(Math.random() * 3),
-            msgPtr: Math.floor(Math.random() * 100),
-            msgSize: Math.floor(Math.random() * 100)
-        });
-        await this.writeMessages(messages, nextHeadPtr);
-        return nextHeadPtr;
+        messages.push(newMessage);
+
+        if(messages.length > 2){
+            console.log(this.name + ': Reading message:')
+            const messageToRead = messages.shift(newMessage);
+            await this.getMessageText(messageToRead);
+        }
+        
+        await this.writeMessages(messages, postMsgHeadPtr);
+        return postMsgHeadPtr;
     }
 }
 
