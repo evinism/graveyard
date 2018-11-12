@@ -205,14 +205,14 @@ const bitArrToMsgRecord = bitArr => ({
 
 const delays = {
     pollInterval: 2000,
-    workTime: 100,
     postReleaseDelay: 5000,
 }
 
 class Client {
-    constructor(name){
+    constructor(name, id = Math.floor(Math.random()*100)){
         //init();
-        this.name = name
+        this.name = name;
+        this.id = id;
     }
 
     async init(){
@@ -259,8 +259,6 @@ class Client {
             console.log(this.name + ': lock acquired')
 
             const nextHeadPtr = await this.readWriteMessages(curHeadPtr);
-            // do 5 seconds of work with the item
-            await new Promise(res => setTimeout(res, delays.workTime))
 
             await this.writeHeadPtr(
                 w(currentWord + 1),
@@ -306,7 +304,7 @@ class Client {
         const nextHeadPtr = (headPtr - prevMsgStoreLength);// - msgCount * msgRecordSize);
 
         const messages = splitMessagesBitfield.map(bitArrToMsgRecord);
-        console.log(this.name + ': read messages: ' + JSON.stringify(messages));
+        //console.log(this.name + ': read messages: ' + JSON.stringify(messages));
         return [messages, nextHeadPtr]
     }
 
@@ -333,7 +331,7 @@ class Client {
         return [headPtr - bitArr.length, headPtr, bitArr.length];
     }
 
-    async makeMessage(headPtr, string){
+    async makeMessage(headPtr, dest, string){
         const [
             nextHeadPtr,
             dataframePtr,
@@ -344,7 +342,7 @@ class Client {
         );
 
         const newMessage = {
-            dest: Math.floor(Math.random() * 3),
+            dest,
             msgPtr: dataframePtr,
             msgSize: dataframeSize,
         };
@@ -355,7 +353,7 @@ class Client {
         const start = message.msgPtr - message.msgSize + 1;
         const resultString = bitArrToString(await api.hitMemRange(
             message.msgPtr - message.msgSize + 1,
-            message.msgPtr
+            message.msgPtr + 1
         ));
         console.log(this.name + ': Read message "' + resultString + '"')
     }
@@ -363,30 +361,32 @@ class Client {
     async readWriteMessages(headPtr){
         const [messages, postReadHeadPtr] = await this.readMessages(headPtr);
 
-
+        const dest = Math.floor(Math.random() * 3);
         const [postMsgHeadPtr, newMessage] = await this.makeMessage(
             postReadHeadPtr,
-            'yo dawg level ' + Math.random().toFixed(2) + ' good'
+            dest, 
+            'to: id #' + dest + ', yo dawg, ' + this.name + ' here, level ' + Math.random().toFixed(2) + ' good'
         );
         
         // Push a random message for now.
         messages.push(newMessage);
 
-        if(messages.length > 2){
-            console.log(this.name + ': Reading message:')
-            const messageToRead = messages.shift(newMessage);
-            await this.getMessageText(messageToRead);
+        for(let i = 0; i < messages.length; i++){
+            if(messages[i].dest === this.id){
+                await this.getMessageText(messages[i]);
+                messages.splice(i, 1);
+            }
         }
-        
+
         await this.writeMessages(messages, postMsgHeadPtr);
         return postMsgHeadPtr;
     }
 }
 
 
-client1 = new Client('client 1');
-client2 = new Client('client 2');
-client3 = new Client('client 3');
+client1 = new Client('client 1', 0);
+client2 = new Client('client 2', 1);
+client3 = new Client('client 3', 2);
 setTimeout(() => client1.init(), Math.random() * 0);
 setTimeout(() => client2.init(), Math.random() * 10000);
-//setTimeout(() => client3.init(), Math.random() * 10000);
+setTimeout(() => client3.init(), Math.random() * 10000);
