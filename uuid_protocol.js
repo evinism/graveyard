@@ -12,13 +12,7 @@ const testRate = () => {
 
 var audioCtx = new (window.AudioContext || window.webkitAudioContext || window.audioContext);
 
-//All arguments are optional:
-
-//duration of the tone in milliseconds. Default is 500
-//frequency of the tone in hertz. default is 440
-//volume of the tone. Default is 1, off is 0.
 //type of tone. Possible values are sine, square, sawtooth, triangle, and custom. Default is sine.
-//callback to use on end of tone
 function beep(duration, frequency, volume, type, callback) {
     var oscillator = audioCtx.createOscillator();
     var gainNode = audioCtx.createGain();
