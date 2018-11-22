@@ -42,7 +42,6 @@ expressionParser :: Parsec String () Expression
 expressionParser = do
     nonApps <- many1 nonApplicationParser
     return $ case nonApps of
-        [] -> error "empty expression, which cant happen very well"
         [x] -> x
         x:xs -> foldl AppExpr x xs
 
