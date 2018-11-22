@@ -12,26 +12,6 @@ data Expression =
     | AbstrExpr Identifier Expression
     deriving (Show)
 
-lambdaCharParser :: Parsec String () ()
-lambdaCharParser = do
-    string "\\"
-    return ()
-
-dotParser :: Parsec String () ()
-dotParser = do
-    string "."
-    return ()
-
-openParenParser :: Parsec String () ()
-openParenParser = do
-    string "("
-    return ()
-
-closeParenParser :: Parsec String () ()
-closeParenParser = do
-    string ")"
-    return ()
-
 nameParser :: Parsec String () Identifier
 nameParser = (count 1 lower) <|> (many1 upper)
 
@@ -42,17 +22,17 @@ identParser = do
 
 abstractionParser :: Parsec String () Expression
 abstractionParser = do
-    lambdaCharParser
+    string "\\"
     ident <- nameParser
-    dotParser
+    string "."
     expr <- expressionParser
     return $ AbstrExpr ident expr
 
 parenExprParser :: Parsec String () Expression
 parenExprParser = do
-    openParenParser
+    string "("
     expr <- expressionParser
-    closeParenParser
+    string ")"
     return expr
 
 nonApplicationParser :: Parsec String () Expression
@@ -62,7 +42,7 @@ expressionParser :: Parsec String () Expression
 expressionParser = do
     nonApps <- many1 nonApplicationParser
     return $ case nonApps of
-        [] -> error "wat"
+        [] -> error "empty expression, which cant happen very well"
         [x] -> x
         x:xs -> foldl AppExpr x xs
 
