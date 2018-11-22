@@ -36,15 +36,10 @@ parenExprParser = do
     return expr
 
 nonApplicationParser :: Parsec String () Expression
-nonApplicationParser = abstractionParser  <|> identParser <|> parenExprParser
+nonApplicationParser = abstractionParser <|> identParser <|> parenExprParser
 
 expressionParser :: Parsec String () Expression
-expressionParser = do
-    nonApps <- many1 nonApplicationParser
-    return $ case nonApps of
-        [] -> error "annoying case"
-        [x] -> x
-        x:xs -> foldl AppExpr x xs
+expressionParser = chainl1 nonApplicationParser $ return AppExpr
 
 statementParser :: Parsec String () Expression
 statementParser = do
