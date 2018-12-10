@@ -24,6 +24,7 @@ dependencies:
 - text
 - parsec
 - containers
+- list-extras
 
 library:
   source-dirs: src
