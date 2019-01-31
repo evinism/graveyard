@@ -1,0 +1,152 @@
+Step 0: Gist of programming
+---
+Basic explanations about how code works
+You write code in files
+You then either
+ - Use a program called a compiler to create a program from your code
+ - Use a program called an interpreter to run the code you've written
+Waving hands a little, all code falls into one of these two buckets
+We'll be doing the second, using a program called Node.
+
+Step 1: Basic tools (15 minutes)
+---
+Shell: We'll try to interact with this as little as possible.
+ - A text based system of commands.
+ - A really low-level way of talking to your operating system
+ - Lots of programs talk to the operating system through this interface
+ - Shell has a "current directory" that you're in.
+ - You run commands with [command] [arg1] [arg2]
+ - For example the command to change the directory would be to do "cd some_folder"
+ - There are a lot of commands, but the basic ones we need are:
+    cd: change directory
+    ls: list directory
+    node somefile: run somefile. Your computer probably doesn't have this one yet, but we'll get it.
+    ...and anything else more complicated we'll leave out for now
+
+Text editor:
+- You can use any text editor you want, but not somethign that handles rich text.
+- notepad would be perfect
+- If you don't know one, we'll download VSCode. It's super easy and will be quick and easy
+
+Node:
+- Google node and download/install it.
+
+Step 2: Hello World
+---
+In a folder you create using `mkdir folder`, create a file called hello.js
+
+We'll get to what these things are in a second, but to make sure we've got everything correct,
+we'll output "hello world"
+
+console.log("hello world");
+
+This is telling node to run the javascript file hello.js, in which we've conveniently
+written a "function call"
+`node hello.js`
+
+Let's dissect what we're looking at.
+
+    console.log(             )
+                ^ we're running a function (in this case the console.log function)
+
+                "hello world" 
+                 ^ we're passing the VALUE "hello world"
+
+A value is something that is a specific piece of data.
+The quotes mean "interpret this as text data". 
+
+Here are some examples of values in javascript
+    "i am value"
+    1.05
+    true
+
+And as expected, we can pass these into the console.log function:
+    console.log("i am a value");
+    console.log(1.05);
+    console.log(true);
+
+Step 3: Variables
+---
+If we want to store values so we can use it later, we'd do the same thing
+we'd do in math and use a VARIABLE. This is how we do it in javascript, using
+the special keyword var;
+
+    var bestAnimal; <-- Declares a variable
+    bestAnimal = giraffe;
+
+In programming we generally instantly put a value into the variable right when we make the variable,
+so javascript gives us a way to both declare and update a variable at the same time.
+    var indespensableWisdom = "if your ball doesn't fit in your mouth, it isn't yours";
+
+And exacly as you'd expect, we can now use that variable in other places!
+    console.log(indespensableWisdom);
+
+We can assign variables to other variables, just like we did when we assigned it to a value!
+    var bestOfTimes = "These times";
+    var worstOfTimes = bestOfTimes;
+    console.log(worstOfTimes); <-- outputs "These Times";
+
+
+Step 4: Logic
+---
+Right now, our program can't do very much "thinking". So we're going to introduce
+some neater stuff. To start us off on this journey, we're going to talk about a new 
+type of value (or data): The BOOLEAN
+
+It's actually very simple. Boolean is just a true or false value. 
+Unsurprisingly, there are two of them: 
+    true
+    false
+
+We can turn true into false and false into true by putting an ! in front of it!
+    console.log(!false) <-- outputs true
+    console.log(!true) <-- outputs false
+
+! is just a mini-function so we can also do it to variables
+    var first = true;
+    var second = !first;
+    console.log(second); <-- outputs false
+
+Step 5: Control Flow
+---
+Now that we've got a boolean, we can introduce another thing, the IF STATEMENT
+it looks a lot like the function call we did earlier, except directly after, it
+has these weird curly braces. It tells us whether or not to do something:
+
+    if (true) { }
+
+We can put statements in between the curly braces:
+
+    if (true) { console.log("Woo inside an if statement"); }
+
+This looks kind of dumb, so we generally format these things like this:
+    if (true) {
+        console.log("Woo inside an if statement");
+    }
+
+(People will argue how to format this, but it really doesn't matter)
+The idea is that if you pass in true, the statement(s) will run, and if you
+pass in false, they won't!
+
+    if (true) {
+        console.log("I will run!");
+    }
+
+    if (false) {
+        console.log("I won't run!!")
+    }
+
+like we could before, we can use variables!
+    var shouldItRun = true; <-- initialize the variable
+    if (shouldItRun) {
+        console.log("This runs!");
+    }
+
+    shouldItRun = false; <-- update the variable
+    if (shouldItRun) {
+        console.log("This definitely does not run!");
+    }
+
+Step 5: Comparing values
+---
+
