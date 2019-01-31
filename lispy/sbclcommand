@@ -1,1 +1,2 @@
 sbcl --eval "(load \"AdventOfCodeDayOne.lisp\")" --quit
+sbcl --eval "(load \"AdventOfCodeDayTwo.lisp\")" --quit
