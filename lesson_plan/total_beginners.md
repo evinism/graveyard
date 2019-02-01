@@ -217,7 +217,7 @@ like we could before, we can use variables!
     }
 ```
 
-Step: Else clauses
+Step: Else and else if clauses
 ---
 If the condition doesn't work, we can create an ELSE clause that will run!
 Its syntax is the following:
@@ -227,6 +227,18 @@ Its syntax is the following:
         // something that will happen if shouldItRun is true
     } else {
         // something that should happen if shouldItRun is false
+    }
+```
+
+Similarly, we can do an "else if" clause:
+
+```
+    if (thingOneIsTrue) {
+        // happens if thing one is true
+    } else if(thingTwoIsTrue) {
+        // only happens if thing two is true, but not thing one
+    } else {
+        // if neither of those are true, we can do this one
     }
 ```
 
@@ -333,15 +345,15 @@ Before attempting to tackle this, let's remind ourselves of the basic building b
 - The ability create and assign variables.
 - Some basic ways to change values: ! for bools, + and - for numbers
 - Ways to compare values: ==, <, >
-- Ways to conditionally run code
+- Ways to conditionally run code, using if, else, and else if
 - Ways to loop over things
 - and a function to say whether a certain number is divisible by another
 
-
 Let's see if we can build towards this iteratively:
 - Try writing a program that outputs the numbers 1 - 100, then STOPS
-- Try writing a program that outputs
-
+- Try writing a program that outputs fizz instead of the number for multiples of three
+- Try writing a programm that outputs buzz instead of the number for multiples of five
+- The tough one: Try completing the whole challenge.
 
 What did I miss?
 ---
