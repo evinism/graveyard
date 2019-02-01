@@ -5,7 +5,9 @@ You write code in files
 You then either
  - Use a program called a compiler to create a program from your code
  - Use a program called an interpreter to run the code you've written
+
 Waving hands a little, all code falls into one of these two buckets
+
 We'll be doing the second, using a program called Node.
 
 Step 1: Basic tools (15 minutes)
@@ -18,10 +20,14 @@ Shell: We'll try to interact with this as little as possible.
  - You run commands with [command] [arg1] [arg2]
  - For example the command to change the directory would be to do "cd some_folder"
  - There are a lot of commands, but the basic ones we need are:
-    cd: change directory
-    ls: list directory
-    node somefile: run somefile. Your computer probably doesn't have this one yet, but we'll get it.
-    ...and anything else more complicated we'll leave out for now
+
+cd: change directory
+
+ls: list directory
+
+node somefile: run somefile. Your computer probably doesn't have this one yet, but we'll get it.
+
+...and anything else more complicated we'll leave out for now
 
 Text editor:
 - You can use any text editor you want, but not somethign that handles rich text.
@@ -144,26 +150,33 @@ type of value (or data): The BOOLEAN (ooooo)
 
 It's actually very simple. boolean is just a true or false value. 
 Unsurprisingly, there are two of them: 
+```
     true
     false
+```
 
 We can turn true into false and false into true by putting an ! in front of it!
+```
     console.log(!false) // outputs true
     console.log(!true) // outputs false
+```
 
 ! is just a mini-function so we can also do it to variables
+```
     var first = true;
     var second = !first;
     console.log(second); // outputs false
+```
 
 Step 7: Comparing values
 ---
 We care about booleans because we get them as the results of comparing numbers!
-
+```
     1 == 1 // One equals one. Gives us true
     1 == 2 // One equals two. Gives us false
     1 != 2 // One does NOT equal one. Gives us true
     2 > 1  // Two is greater than one. 
+```
 
 You can try logging these functions!!
 
