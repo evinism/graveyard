@@ -1,3 +1,8 @@
+All Levels
+---
+* What does a good test suite look like to you?
+* Tell me about a recent nasty bug you had to solve!
+
 Junior
 ---
 * Can you explain to me what a CI pipeline does and why it's useful? How about CD?
