@@ -1,0 +1,33 @@
+Junior
+---
+* Can you explain to me what a CI pipeline does and why it's useful? How about CD?
+* How about a load balancer? What is it and why is it useful?
+* Let’s say you have to spin up a brand new service. What might you look at when choosing a programming language? No right answers on this one.
+* What are two languages you've used? Compare and contrast two programming languages.
+* What is a database migration?
+
+Frontend
+---
+* What might factor into the time it takes for an HTTP request from the browser to complete?
+* What is thrashing
+* What sort of factors might you weigh when determining whether something should be a single page app or not?
+
+
+Problem 1:
+---
+Imagine you've got a pizza in front of you, and that the pizza has n slices. 
+Each slice has a different amount of cheese on it, and you want to maximise
+how much cheese you eat. The only problem is:
+
+* You can't eat the whole thing, because you'll get full after k slices.
+* You're a strict follower of Pizza Etiquitte. After you take the first 
+  slice, you can only take slices adjacent to slices you've already taken.
+
+Can you come up with an algorithm that specifies which slices you should eat 
+to maximize the amount of cheese you eat before you get full?
+
+test one:   2, 4, 6, 3, 1, 1
+test two:   5, 5, 2, 4, 3, 5
+test three: 5, 5, 5, 4, 5, 6
+test four:  1, 1, 1, 1, 0, 1; k = 5
+test five:  1, 1, 1, 1, 2, 0, 1, 1; k = 6
